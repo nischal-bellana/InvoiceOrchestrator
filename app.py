@@ -15,9 +15,8 @@ class InvoiceData(BaseModel):
 
 # --- 2. Configuration ---
 # Use the full model path ex: models/gemini-2.5-flash
-MODEL_ID = "models/gemini-2.5-flash" 
+MODEL_ID = "models/gemini-2.0-flash-lite" 
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-model = genai.GenerativeModel(MODEL_ID)
 
 def extract_document(file_bytes, mime_type):
     prompt = "Extract details from this invoice accurately. Follow the provided JSON schema. Dates Format-YYYY-MM-DD"
@@ -36,6 +35,9 @@ def extract_document(file_bytes, mime_type):
 st.set_page_config(page_title="AI Document Orchestrator", page_icon="📑")
 st.title("📑 AI Invoice Document Orchestrator")
 st.markdown("### Intelligent Invoice Processing & Automation")
+
+MODEL_ID = st.selectbox("Select Model", genai.list_models())
+model = genai.GenerativeModel(MODEL_ID)
 
 uploaded_file = st.file_uploader("Upload Invoice (PDF, PNG, JPG)", type=['pdf', 'png', 'jpg'])
 
