@@ -34,13 +34,13 @@ The **AI Invoice Document Orchestrator** is an intelligent document processing a
 
 ### 1. Clone the repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/nischal-bellana/InvoiceOrchestrator.git
 cd invoice-orchestrator
 ```
 
 ### 2. Install dependencies
 ```bash
-pip install streamlit pydantic google-generativeai requests
+pip install -r requirements.txt
 ```
 
 ### 3. Configure Secrets
