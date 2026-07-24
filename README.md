@@ -19,7 +19,6 @@ The **AI Invoice Document Orchestrator** is an intelligent document processing a
 3. **Automation/Backend:** n8n Workflow.
 
 ### n8n Workflow Architecture
-*(Replace the image below with your actual n8n workflow screenshot)*
 
 ![n8n Workflow Screenshot](./Workflow.png)
 
