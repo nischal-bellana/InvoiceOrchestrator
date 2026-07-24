@@ -1,0 +1,324 @@
+{
+  "name": "InvoiceOrchestratorWorkFlow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aa3646f7-f236-4e72-bff1-9f7c2732be43",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -512,
+        -32
+      ],
+      "id": "a99c8892-ff9b-46c2-806a-38f40ef710b8",
+      "name": "Webhook",
+      "webhookId": "aa3646f7-f236-4e72-bff1-9f7c2732be43"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "89b75145-e185-41d4-b5b2-9b697c7a952c",
+              "leftValue": "={{ $json.body.total_amount }}",
+              "rightValue": "={{ $json.body.min_amount }}",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -336,
+        -32
+      ],
+      "id": "28f57f7b-31d8-49ee-87d6-b72d9056f215",
+      "name": "If amount meets threshold",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1QCTmG7QN0KGQRj6miQPoetAI2J9dgQLsrLysEvSLb1Y/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QCTmG7QN0KGQRj6miQPoetAI2J9dgQLsrLysEvSLb1Y/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Vendor": "={{ $('Webhook').item.json.body.vendor_name }}",
+            "Total Amount": "={{ $('Webhook').item.json.body.total_amount }}",
+            "Issue Date": "={{ $('Webhook').item.json.body.issue_date }}",
+            "Due Date": "={{ $('Webhook').item.json.body.due_date }}",
+            "Items": "={{ $('Webhook').item.json.body.items.join(\", \") }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Vendor",
+              "displayName": "Vendor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Total Amount",
+              "displayName": "Total Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Issue Date",
+              "displayName": "Issue Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Due Date",
+              "displayName": "Due Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Items",
+              "displayName": "Items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -160,
+        -128
+      ],
+      "id": "dcdc55b4-9b9a-45f9-a460-e4815a5cb718",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IG4hV3mbwCt5kKws",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7c2b42ea-ccd0-421d-be2d-f487f3c13714",
+              "leftValue": "={{ $('Webhook').item.json.body.remaining_due_days }}",
+              "rightValue": "={{ $('Webhook').item.json.body.max_due_days }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        48,
+        -128
+      ],
+      "id": "f9d556fb-ecdb-435e-ad51-6fb9749cf189",
+      "name": "If due period short"
+    },
+    {
+      "parameters": {
+        "sendTo": "nischal.bellana@gmail.com",
+        "subject": "=Transaction with {{ $json.Vendor }} is due {{ $('Webhook').item.json.body.remaining_due_days }} days",
+        "message": "=<p> This message is a reminder to clear the dues with the Vendor {{ $json.Vendor }} of amount {{ $json['Total Amount'] }} by {{ $json['Due Date'] }}. The items that were purchased are {{ $json.Items }} </p>\n\n<p>Thank you..</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        256,
+        -224
+      ],
+      "id": "c66f1a76-748a-4115-bd10-c538983fb71b",
+      "name": "Send a message",
+      "webhookId": "8b9a11d9-62a4-4ba9-bd28-d67ca44704f7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4SHHeQixmsUb0JWD",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        -16
+      ],
+      "id": "56ea4edd-46e0-4002-b97a-4ebcddcc2e46",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {
+    "Append row in sheet": [
+      {
+        "json": {
+          "Vendor": "DEMO - Sliced Invoices",
+          "Total Amount": 93.5,
+          "Issue Date": "2016-01-25",
+          "Due Date": "2016-01-31",
+          "Items": "Web Design"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If amount meets threshold",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If amount meets threshold": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If due period short",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If due period short": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "677a124a-c225-4dfb-b0a3-84785dc8aa74",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e97f4b208ab499c41eabbf821499f662b38b99745370006579a0fe5ce418b790"
+  },
+  "id": "zS30wUISLfiVhIfh",
+  "tags": []
+}
